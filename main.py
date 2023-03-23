@@ -1,4 +1,4 @@
-import helpers
+from src import helpers
 from lol import hellow
 
 # Press the green button in the gutter to run the script.
