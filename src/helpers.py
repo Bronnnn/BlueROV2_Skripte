@@ -200,7 +200,9 @@ def create_master_CompanionComputer2Autopilot(addr:str="0.0.0.0:9000"):
     """
     master = mavutil.mavlink_connection('udpout:'+addr)
 
-    return master
+    boot_time = time.time()
+
+    return master, boot_time
 
 
 def wait_conn(master):
