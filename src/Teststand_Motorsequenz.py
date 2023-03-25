@@ -9,6 +9,7 @@ def run(conn_type:str="SC2A"):
     print("Teststand_Motorsequenz")
 
     print("\nConnecting to autopilot")
+    conn_types = {"SC2A": "Surface Computer to Autopilot", "CC2A": "Companion Computer to Autopilot"}
     if conn_type == "SC2A":
         # create connection from surface computer to autopilot
         master, boot_time = helpers.create_master_SurfaceComputer2Autopilot()
@@ -16,8 +17,13 @@ def run(conn_type:str="SC2A"):
         # create connection from companion computer to autopilot
         master, boot_time = helpers.create_master_CompanionComputer2Autopilot()
         helpers.wait_conn(master)
+    elif conn_type not in conn_types.keys():
+        print(f"{conn_type} unsupported connection type. Available connection types:")
+        for key in conn_types.keys():
+            print(f" {key}: {conn_types[key]}")
+        return(0)
     else:
-        print(f"{conn_type} is an invalid connection type.")
+        print(f"{conn_type} caused unexpected error.")
         return(0)
 
     # clean up (disarm)
