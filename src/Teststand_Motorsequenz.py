@@ -48,34 +48,34 @@ def run(conn_type:str="SC2A"):
     time_start = default_timer()
     time_passed = 0
     timeout_s = 5
-    print("full speed down")
+    print("medium speed down")
     while time_passed < timeout_s:
-        helpers.manual_control(master, x=0, y=0, z=0, r=0)
+        helpers.manual_control(master, x=0, y=0, z=250, r=0)
         time_passed = default_timer() - time_start
 
     # init timer
     time_start = default_timer()
     time_passed = 0
     timeout_s = 5
-    print("full speed rotating right")
+    print("medium speed rotating right")
     while time_passed < timeout_s:
-        helpers.manual_control(master, x=0, y=100, z=500, r=1000)
+        helpers.manual_control(master, x=0, y=100, z=500, r=500)
         time_passed = default_timer() - time_start
 
     # init timer
     time_start = default_timer()
     time_passed = 0
     timeout_s = 5
-    print("full speed forward")
+    print("medium speed forward")
     while time_passed < timeout_s:
-        helpers.manual_control(master, x=1000, y=0, z=500, r=0)
+        helpers.manual_control(master, x=500, y=0, z=500, r=0)
         time_passed = default_timer() - time_start
 
     # init timer
     time_start = default_timer()
     time_passed = 0
     timeout_s = 5
-    print("full speed sideways right")
+    print("medium speed sideways right")
     while time_passed < timeout_s:
-        helpers.manual_control(master, x=0, y=1000, z=500, r=0)
+        helpers.manual_control(master, x=0, y=500, z=500, r=0)
         time_passed = default_timer() - time_start

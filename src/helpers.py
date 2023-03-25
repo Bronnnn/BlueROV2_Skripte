@@ -190,8 +190,7 @@ def recv_match(master, timeout=1, mavpackettype = 'ATTITUDE'):
 
     return msg
 
-
-def create_master_CompanionComputer2Autopilot(addr:str="0.0.0.0:9000"):
+def create_master_CompanionComputer2Autopilot(addr:str="0.0.0.0:14001"):
     """
     Companion is already configured to allow script connections under the port 9000
     Note: The connection is done with 'udpout' and not 'udpin'.
