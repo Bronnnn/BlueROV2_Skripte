@@ -59,7 +59,7 @@ def run(conn_type:str="SC2A"):
     timeout_s = 5
     print("medium speed rotating right")
     while time_passed < timeout_s:
-        helpers.manual_control(master, x=0, y=100, z=500, r=500)
+        helpers.manual_control(master, x=0, y=0, z=500, r=500)
         time_passed = default_timer() - time_start
 
     # init timer

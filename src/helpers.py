@@ -226,6 +226,72 @@ def wait_conn(master):
 
     return 1
 
+def check_capabilities(master):
+    # get autopilot version and capabilities
+    print("Request 'AUTOPILOT_VERSION'")
+    standard_request_msg(master, mavlink_msg_id=148)
+    autopilot_version = recv_match(master, mavpackettype="AUTOPILOT_VERSION")
+    print(f"Autopilot version: {autopilot_version}")
+    # check if autopilot supports commanding position and velocity targets in global scaled integers
+    # Source: https://mavlink.io/en/messages/common.html#MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_GLOBAL_INT
+    MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_GLOBAL_INT = autopilot_version['capabilities'] & 256
+    print(
+        f"MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_GLOBAL_INT: {MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_GLOBAL_INT == 256}")
+    MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_LOCAL_NED = autopilot_version['capabilities'] & 128
+    print(
+        f"MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_LOCAL_NED: {MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_LOCAL_NED == 128}")
+
+def init(master):
+    # clean up (disarm)
+    print("Inital state")
+    disarm(master)
+    master.motors_disarmed_wait()
+    print(f"\n")
+
+    # available modes: ['STABILIZE', 'ACRO', 'ALT_HOLD', 'AUTO', 'GUIDED', 'CIRCLE', 'SURFACE', 'POSHOLD', 'MANUAL']
+    flightmode = 'ALT_HOLD'
+    print(f"Set {flightmode} mode")
+    change_flightmode(master, mode=flightmode)
+
+    print("\n!!! Arming. Stay clear !!!")
+    time_start = default_timer()
+    countdown = 5
+    while (default_timer() - time_start < countdown):
+        print(round(countdown - (default_timer() - time_start)))
+        time.sleep(1)
+    # arm ardusub
+    arm(master)
+    master.motors_armed_wait()
+    print(f"\n")
+
+    return 1
+
+def get_global_position_int(master):
+    # get current depth
+    print("Request 'GLOBAL_POSITION_INT'")
+    standard_request_msg(master, mavlink_msg_id=33)
+    global_position_int = recv_match(master, mavpackettype="GLOBAL_POSITION_INT")
+
+    return global_position_int
+
+def update_position(master, target_depth_m:int):
+    position = {}
+    global_position_int = get_global_position_int(master)
+    position["depth_mm"] = global_position_int["alt"]
+    position["depth_m"] = position["depth_mm"] / 1000
+    position["depth_difference_abs_m"] = abs(position["depth_m"] - target_depth_m)
+    position["heading"] = global_position_int["hdg"] / 100
+
+    return position
+
+def print_position(position:dict, target_depth_m:int):
+    print(f"current depth: {position['depth_m']:.2f}m")
+    print(f"target depth: {target_depth_m:.2f}m")
+    print(f"absolute depth difference: {position['depth_difference_abs_m']:.2f}m")
+    print(f"heading: {position['heading']}°")
+
+    return 1
+
 def hello_world():
     print("hello world")
     print(f"current working dir: {os.getcwd()}")
