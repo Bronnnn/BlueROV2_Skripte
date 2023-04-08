@@ -171,7 +171,7 @@ def create_master_SurfaceComputer2Autopilot(timeout:int=5, addr:str="127.0.0.1:1
 
     return master, boot_time
 
-def recv_match(master, timeout=1, mavpackettype = 'ATTITUDE'):
+def recv_match(master, timeout=1, mavpackettype = 'ATTITUDE', verbose = 3):
     # init timeout
     time_start = default_timer()
     time_passed = 0
@@ -181,11 +181,11 @@ def recv_match(master, timeout=1, mavpackettype = 'ATTITUDE'):
     while time_passed<timeout:
         try:
             msg = master.recv_match(type=mavpackettype).to_dict()
-            print("received")
+            if verbose>2: print("received")
             break
         except:
             time_passed = default_timer() - time_start
-            print(f"retry: {(timeout-time_passed):.2f}s until timeout.")
+            if verbose>2: print(f"retry: {(timeout-time_passed):.2f}s until timeout.")
         time.sleep(0.1)
 
     return msg
@@ -246,19 +246,19 @@ def init(master):
     print("Inital state")
     disarm(master)
     master.motors_disarmed_wait()
-    print(f"\n")
 
     # available modes: ['STABILIZE', 'ACRO', 'ALT_HOLD', 'AUTO', 'GUIDED', 'CIRCLE', 'SURFACE', 'POSHOLD', 'MANUAL']
     flightmode = 'ALT_HOLD'
     print(f"Set {flightmode} mode")
     change_flightmode(master, mode=flightmode)
 
-    print("\n!!! Arming. Stay clear !!!")
+    print("\n !!! Arming. Stay clear !!!")
     time_start = default_timer()
     countdown = 5
     while (default_timer() - time_start < countdown):
-        print(round(countdown - (default_timer() - time_start)))
+        print("\r"+str(round(countdown - (default_timer() - time_start))), end="")
         time.sleep(1)
+    print(f"\n")
     # arm ardusub
     arm(master)
     master.motors_armed_wait()
@@ -266,17 +266,17 @@ def init(master):
 
     return 1
 
-def get_global_position_int(master):
+def get_global_position_int(master, verbose=3):
     # get current depth
-    print("Request 'GLOBAL_POSITION_INT'")
+    if verbose>2: print("Request 'GLOBAL_POSITION_INT'")
     standard_request_msg(master, mavlink_msg_id=33)
-    global_position_int = recv_match(master, mavpackettype="GLOBAL_POSITION_INT")
+    global_position_int = recv_match(master, mavpackettype="GLOBAL_POSITION_INT", verbose=verbose)
 
     return global_position_int
 
-def update_position(master, target_depth_m:int):
+def update_position(master, target_depth_m:int, verbose = 3):
     position = {}
-    global_position_int = get_global_position_int(master)
+    global_position_int = get_global_position_int(master, verbose=verbose)
     position["depth_mm"] = global_position_int["alt"]
     position["depth_m"] = position["depth_mm"] / 1000
     position["depth_difference_abs_m"] = abs(position["depth_m"] - target_depth_m)
@@ -291,6 +291,130 @@ def print_position(position:dict, target_depth_m:int):
     print(f"heading: {position['heading']}°")
 
     return 1
+
+def hold_depth(master, boot_time, target_depth_m, timeout_s, verbose = 3):
+    """
+    Links:
+    Depth Hold Controller. https://github.com/ArduPilot/ardupilot/blob/fd32425d2495b681a9440f96f0be1c43142fbff5/ArduSub/control_althold.cpp
+    Alt hold controller should be called at 100 Hz or more (does it mean target depth has to be set so often?)
+    """
+
+    # init timeout
+    time_start = default_timer()
+    time_passed = 0
+
+    # get current depth
+    print("Update position")
+    position = update_position(master, target_depth_m)
+    if verbose > 0: print_position(position, target_depth_m)
+
+    # allowed difference between target depth and current depth
+    max_depth_difference_m = 0.1
+    timeout_passed = False
+    target_depth_reached = False
+    target_depth_reached_and_held = False
+
+    while not target_depth_reached_and_held:
+        while not timeout_passed and not target_depth_reached:
+            if verbose>1: print(f"Set target depth: {target_depth_m}m")
+            set_target_depth(target_depth_m, master, boot_time)
+
+            if verbose>1: print("Update position")
+            position = update_position(master, target_depth_m, verbose=verbose)
+            if verbose>2: print_position(position, target_depth_m)
+
+            # print the time left for reaching the target depth, before starting to rotate
+            time_passed = default_timer() - time_start
+            if verbose>1: print(f"Get to target depth: {int(timeout_s - time_passed)}s until timeout.")
+
+            time.sleep(0.1)
+
+            timeout_passed = time_passed > timeout_s
+            target_depth_reached = position['depth_difference_abs_m'] < max_depth_difference_m
+
+        print(f"\n")
+        time_sleep_s = 5
+        print(f"Sleep for {time_sleep_s}s to stabilize.")
+        time.sleep(time_sleep_s)
+        print(f"Check if the target depth has been held properly, otherwise retry setting target depth: ", end="")
+        position = update_position(master, target_depth_m, verbose=verbose)
+        if position['depth_difference_abs_m'] < max_depth_difference_m:
+            target_depth_reached_and_held = True
+            print("Passed")
+        else:
+            target_depth_reached_and_held = False
+            print("Failed")
+
+def turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose=3):
+    # init timeout
+    time_start = default_timer()
+    time_passed = 0
+
+    # get current depth
+    print("Update position")
+    position = update_position(master, target_depth_m, verbose=verbose)
+    print_position(position, target_depth_m)
+
+    # calculate desired heading and difference
+    heading_old_deg = position['heading']
+    num_target_full_turns = relative_target_heading_deg // 360
+    fraction_turn_deg = relative_target_heading_deg - num_target_full_turns * 360
+    absolute_target_heading = position['heading'] + fraction_turn_deg
+
+    print(f"Set target turn (relative to the current heading): {relative_target_heading_deg}°")
+    print(f"Current heading: {position['heading']}")
+    print(f"Target turn (relativ to the current heading): {relative_target_heading_deg}")
+    print(f"Requires the submarine to turn {num_target_full_turns} times and {fraction_turn_deg}")
+    print(f"Results in a new absolute heading of {fraction_turn_deg}")
+
+    # describes how much the submarines heading changed
+    relative_heading_deg = 0
+    num_full_turns_made = 0
+
+    # allowed difference between relative target heading and current heading
+    max_angle_difference_deg = 1
+    timeout_passed = False
+    relative_target_heading_reached = False
+
+    while not timeout_passed and not relative_target_heading_reached:
+        print("Update position")
+        position = update_position(master, target_depth_m, verbose=verbose)
+        # print_position(position, target_depth_m)
+        heading_new_deg = position['heading']
+        relative_heading_deg += heading_new_deg - heading_old_deg
+        relative_heading_difference_abs_deg = abs(relative_target_heading_deg-relative_heading_deg)
+
+        if relative_heading_deg > 360+num_full_turns_made*360:
+            num_full_turns_made +=1
+        print(f"Target (relative): {relative_target_heading_deg}°")
+        print(f"Reached (relative): {relative_heading_deg:.2f}°")
+        print(f"Target (absolute): {num_target_full_turns} turn(s) and {absolute_target_heading}°")
+        print(f"Reached (absolute): {num_full_turns_made} turn(s) and {heading_new_deg}°")
+
+        # to not overshoot too much
+        coefficient = relative_heading_difference_abs_deg/abs(relative_target_heading_deg)
+        if coefficient > 1: coefficient = 1
+
+        # turn
+        if relative_target_heading_deg > 0:
+            print("medium speed rotating right")
+            manual_control(master, x=0, y=0, z=500, r=int(250*coefficient))
+        if relative_target_heading_deg < 0:
+            print("medium speed rotating left")
+            manual_control(master, x=0, y=0, z=500, r=int(-250*coefficient))
+
+        heading_old_deg = heading_new_deg
+
+        # print the time left for reaching the target depth, before starting to rotate
+        time_passed = default_timer() - time_start
+        print(f"Make turn: {(timeout_s - time_passed):.2f}s until timeout.")
+        print("\n")
+        time.sleep(1)
+
+        timeout_passed = time_passed > timeout_s
+        relative_target_heading_reached = relative_heading_difference_abs_deg < max_angle_difference_deg
+
+    print(f"\n")
 
 def hello_world():
     print("hello world")
