@@ -190,6 +190,28 @@ def recv_match(master, timeout=1, mavpackettype = 'ATTITUDE', verbose = 3):
 
     return msg
 
+def recv_parameter(master, timeout=1, param_id = 'SURFACE_DEPTH', verbose = 3):
+    mavpackettype = 'PARAM_VALUE'
+
+    # init timeout
+    time_start = default_timer()
+    time_passed = 0
+
+    msg = None
+
+    while time_passed<timeout:
+        try:
+            msg = master.recv_match(type=mavpackettype).to_dict()
+            if msg['param_id'] != param_id: Exception
+            if verbose>2: print("received")
+            break
+        except:
+            time_passed = default_timer() - time_start
+            if verbose>2: print(f"retry: {(timeout-time_passed):.2f}s until timeout.")
+        time.sleep(0.1)
+
+    return msg
+
 def create_master_CompanionComputer2Autopilot(addr:str="0.0.0.0:14001"):
     """
     Companion is already configured to allow script connections under the port 9000
@@ -226,24 +248,21 @@ def wait_conn(master):
 
     return 1
 
-def check_capabilities(master):
+def check_capabilities(master, verbose=3):
     # get autopilot version and capabilities
-    print("Request 'AUTOPILOT_VERSION'")
+    if verbose>0: print("Request 'AUTOPILOT_VERSION'")
     standard_request_msg(master, mavlink_msg_id=148)
-    autopilot_version = recv_match(master, mavpackettype="AUTOPILOT_VERSION")
-    print(f"Autopilot version: {autopilot_version}")
+    autopilot_version = recv_match(master, mavpackettype="AUTOPILOT_VERSION", verbose=0)
+    if verbose>1: print(f"Autopilot version: {autopilot_version}")
     # check if autopilot supports commanding position and velocity targets in global scaled integers
     # Source: https://mavlink.io/en/messages/common.html#MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_GLOBAL_INT
     MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_GLOBAL_INT = autopilot_version['capabilities'] & 256
-    print(
-        f"MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_GLOBAL_INT: {MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_GLOBAL_INT == 256}")
+    if verbose>0: print(f"MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_GLOBAL_INT: {MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_GLOBAL_INT == 256}")
     MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_LOCAL_NED = autopilot_version['capabilities'] & 128
-    print(
-        f"MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_LOCAL_NED: {MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_LOCAL_NED == 128}")
+    if verbose>0: print(f"MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_LOCAL_NED: {MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_LOCAL_NED == 128}")
 
 def init(master):
     # clean up (disarm)
-    print("Inital state")
     disarm(master)
     master.motors_disarmed_wait()
 
@@ -281,6 +300,8 @@ def update_position(master, target_depth_m:int, verbose = 3):
     position["depth_m"] = position["depth_mm"] / 1000
     position["depth_difference_abs_m"] = abs(position["depth_m"] - target_depth_m)
     position["heading"] = global_position_int["hdg"] / 100
+    print(f"heading: {position['heading']}")
+    #if position['heading'] < 0: position['heading'] = position['heading'] + 360
 
     return position
 
@@ -298,46 +319,62 @@ def hold_depth(master, boot_time, target_depth_m, timeout_s, verbose = 3):
     Depth Hold Controller. https://github.com/ArduPilot/ardupilot/blob/fd32425d2495b681a9440f96f0be1c43142fbff5/ArduSub/control_althold.cpp
     Alt hold controller should be called at 100 Hz or more (does it mean target depth has to be set so often?)
     """
+    print(f"=== Get to target depth: {target_depth_m}m ===")
 
-    # init timeout
-    time_start = default_timer()
-    time_passed = 0
+    print(f"Target depth: {target_depth_m}m")
+    set_surface_depth_parameter(master, -0.2)
+    request_surface_depth_parameter(master)
+    surface_depth_msg = recv_parameter(master, param_id='SURFACE_DEPTH', verbose=0)
+    surface_depth_m = surface_depth_msg['param_value']/100
+    adjusted_target_depth_m = target_depth_m + surface_depth_m
+    print(f"Surface depth (parameter): {surface_depth_m}m")
+    print(f"Adjusted target depth: {adjusted_target_depth_m}m")
 
-    # get current depth
-    print("Update position")
-    position = update_position(master, target_depth_m)
-    if verbose > 0: print_position(position, target_depth_m)
-
-    # allowed difference between target depth and current depth
-    max_depth_difference_m = 0.1
-    timeout_passed = False
-    target_depth_reached = False
     target_depth_reached_and_held = False
-
     while not target_depth_reached_and_held:
+        # init timeout
+        time_start = default_timer()
+        time_passed = 0
+
+        # get current depth
+        if verbose > 0: print("\nUpdate position")
+        position = update_position(master, target_depth_m, verbose=verbose)
+        if verbose > 0: print_position(position, target_depth_m), time.sleep(2)
+
+        # allowed difference between target depth and current depth
+        max_depth_difference_m = 0.05
+        timeout_passed = False
+        target_depth_reached = False
+
         while not timeout_passed and not target_depth_reached:
-            if verbose>1: print(f"Set target depth: {target_depth_m}m")
+            if verbose>2: print(f"Set target depth: {target_depth_m}m")
             set_target_depth(target_depth_m, master, boot_time)
-
-            if verbose>1: print("Update position")
-            position = update_position(master, target_depth_m, verbose=verbose)
+            if verbose>1: print("\nUpdate position")
+            position = update_position(master, adjusted_target_depth_m, verbose=verbose)
             if verbose>2: print_position(position, target_depth_m)
-
-            # print the time left for reaching the target depth, before starting to rotate
             time_passed = default_timer() - time_start
-            if verbose>1: print(f"Get to target depth: {int(timeout_s - time_passed)}s until timeout.")
+            if verbose>1: print(f"Target: {target_depth_m:.2f}m")
+            if verbose>1: print(f"Adjusted Target (Target + Surface Depth Parameter): {adjusted_target_depth_m:.2f}m")
+            if verbose>1: print(f"Reached: {(position['depth_m'])}m")
+            if verbose > 1: print(f"Get to target depth: {(timeout_s - time_passed):.2f}s until timeout.")
 
             time.sleep(0.1)
 
             timeout_passed = time_passed > timeout_s
             target_depth_reached = position['depth_difference_abs_m'] < max_depth_difference_m
 
-        print(f"\n")
-        time_sleep_s = 5
-        print(f"Sleep for {time_sleep_s}s to stabilize.")
-        time.sleep(time_sleep_s)
+        time_start = default_timer()
+        stabilization_time_s = 10
+        print(f"\nSleep for {stabilization_time_s}s to stabilize.")
+        while (default_timer() - time_start < stabilization_time_s):
+            print("\r" + str(round(stabilization_time_s - (default_timer() - time_start))), end="")
+            time.sleep(1)
+
+        position = update_position(master, adjusted_target_depth_m, verbose=verbose)
+        if verbose > 1: print(f"\n\nTarget: {target_depth_m}m")
+        if verbose > 1: print(f"Adjusted Target (Target + Surface Depth Parameter): {adjusted_target_depth_m:.2f}m")
+        if verbose > 1: print(f"Reached: {position['depth_m']}m")
         print(f"Check if the target depth has been held properly, otherwise retry setting target depth: ", end="")
-        position = update_position(master, target_depth_m, verbose=verbose)
         if position['depth_difference_abs_m'] < max_depth_difference_m:
             target_depth_reached_and_held = True
             print("Passed")
@@ -345,7 +382,25 @@ def hold_depth(master, boot_time, target_depth_m, timeout_s, verbose = 3):
             target_depth_reached_and_held = False
             print("Failed")
 
+def set_surface_depth_parameter(master, depth_m):
+    # Set new parameter value
+    master.mav.param_set_send(
+        master.target_system, master.target_component,
+        b'SURFACE_DEPTH',
+        depth_m*100,
+        mavutil.mavlink.MAV_PARAM_TYPE_REAL32
+    )
+
+def request_surface_depth_parameter(master):
+    # Request parameter
+    master.mav.param_request_read_send(
+        master.target_system, master.target_component,
+        b'SURFACE_DEPTH', #parameter id
+        -1
+    )
+
 def turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose=3):
+    print(f"\n=== Turn by {relative_target_heading_deg}° ===")
     # init timeout
     time_start = default_timer()
     time_passed = 0
@@ -353,7 +408,7 @@ def turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose
     # get current depth
     print("Update position")
     position = update_position(master, target_depth_m, verbose=verbose)
-    print_position(position, target_depth_m)
+    print(f"Heading: {position['heading']}°")
 
     # calculate desired heading and difference
     heading_old_deg = position['heading']
@@ -362,10 +417,10 @@ def turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose
     absolute_target_heading = position['heading'] + fraction_turn_deg
 
     print(f"Set target turn (relative to the current heading): {relative_target_heading_deg}°")
-    print(f"Current heading: {position['heading']}")
-    print(f"Target turn (relativ to the current heading): {relative_target_heading_deg}")
-    print(f"Requires the submarine to turn {num_target_full_turns} times and {fraction_turn_deg}")
-    print(f"Results in a new absolute heading of {fraction_turn_deg}")
+    print(f"Current heading: {position['heading']}°")
+    print(f"Target turn (relativ to the current heading): {relative_target_heading_deg}°")
+    print(f"Requires the submarine to turn {num_target_full_turns} time(s) and {fraction_turn_deg}°")
+    print(f"Results in a new absolute heading of {absolute_target_heading:.2f}°")
 
     # describes how much the submarines heading changed
     relative_heading_deg = 0
@@ -375,33 +430,52 @@ def turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose
     max_angle_difference_deg = 1
     timeout_passed = False
     relative_target_heading_reached = False
+    angle_wrap = False
 
     while not timeout_passed and not relative_target_heading_reached:
         print("Update position")
         position = update_position(master, target_depth_m, verbose=verbose)
         # print_position(position, target_depth_m)
         heading_new_deg = position['heading']
-        relative_heading_deg += heading_new_deg - heading_old_deg
+        standard_request_msg(master, 30)
+        attitude = recv_match(master, 1, "ATTITUDE")
+        yawspeed = attitude['yawspeed']
+        # check if the angle wrapped around (e.g. old_angle = 359° and new_angle = 1°)
+        if yawspeed > 0 and heading_new_deg < heading_old_deg: angle_wrap = True
+        elif yawspeed < 0 and heading_new_deg > heading_old_deg: angle_wrap = True
+        else: angle_wrap = False
+        # with 0.25 % power the yawspeed is roughly 0.07, the limit stops it from falsely detecting wrap arounds
+        if yawspeed > 0.01:
+            if angle_wrap: relative_heading_deg += abs(heading_new_deg - heading_old_deg) - 360
+            if not angle_wrap: relative_heading_deg += abs(heading_new_deg - heading_old_deg)
+        elif yawspeed < 0.01:
+            if angle_wrap: relative_heading_deg -= abs(heading_new_deg - heading_old_deg) - 360
+            if not angle_wrap: relative_heading_deg -= abs(heading_new_deg - heading_old_deg)
+        else:
+            relative_heading_deg += 0
+
         relative_heading_difference_abs_deg = abs(relative_target_heading_deg-relative_heading_deg)
+        relative_heading_difference_deg = relative_target_heading_deg-relative_heading_deg
 
         if relative_heading_deg > 360+num_full_turns_made*360:
             num_full_turns_made +=1
         print(f"Target (relative): {relative_target_heading_deg}°")
         print(f"Reached (relative): {relative_heading_deg:.2f}°")
-        print(f"Target (absolute): {num_target_full_turns} turn(s) and {absolute_target_heading}°")
-        print(f"Reached (absolute): {num_full_turns_made} turn(s) and {heading_new_deg}°")
+        print(f"Target (absolute): {num_target_full_turns} turn(s) and {absolute_target_heading:.2f}°")
+        print(f"Reached (absolute): {num_full_turns_made} turn(s) and {heading_new_deg if num_full_turns_made==num_target_full_turns else 0}°")
 
-        # to not overshoot too much
-        coefficient = relative_heading_difference_abs_deg/abs(relative_target_heading_deg)
-        if coefficient > 1: coefficient = 1
+        # reduce power when close to target, to not overshoot (could have made a more sophisticated approach with pid
+        # controller and such but this works aswell)
+        power = 500
+        if relative_heading_difference_abs_deg < 60: power = 250
 
         # turn
-        if relative_target_heading_deg > 0:
-            print("medium speed rotating right")
-            manual_control(master, x=0, y=0, z=500, r=int(250*coefficient))
-        if relative_target_heading_deg < 0:
-            print("medium speed rotating left")
-            manual_control(master, x=0, y=0, z=500, r=int(-250*coefficient))
+        if relative_heading_difference_deg > 0:
+            print(f"{(power/1000)*100}% power rotating right")
+            manual_control(master, x=0, y=0, z=500, r=power)
+        if relative_heading_difference_deg < 0:
+            print(f"{(power/1000)*100}% power rotating left")
+            manual_control(master, x=0, y=0, z=500, r=-power)
 
         heading_old_deg = heading_new_deg
 
@@ -409,10 +483,67 @@ def turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose
         time_passed = default_timer() - time_start
         print(f"Make turn: {(timeout_s - time_passed):.2f}s until timeout.")
         print("\n")
-        time.sleep(1)
 
+        time.sleep(0.1)
         timeout_passed = time_passed > timeout_s
         relative_target_heading_reached = relative_heading_difference_abs_deg < max_angle_difference_deg
+
+    print(f"\n")
+
+def set_target_attitude(roll, pitch, yaw, master, boot_time):
+    """ Sets the target attitude while in depth-hold mode.
+
+        'roll', 'pitch', and 'yaw' are angles in degrees.
+
+        """
+    master.mav.set_attitude_target_send(
+        int(1e3 * (time.time() - boot_time)),  # ms since boot
+        master.target_system, master.target_component,
+        # allow throttle to be controlled by depth_hold mode
+        mavutil.mavlink.ATTITUDE_TARGET_TYPEMASK_THROTTLE_IGNORE,
+        # -> attitude quaternion (w, x, y, z | zero-rotation is 1, 0, 0, 0)
+        QuaternionBase([math.radians(angle) for angle in (roll, pitch, yaw)]),
+        0, 0, 0, 0  # roll rate, pitch rate, yaw rate, thrust
+    )
+
+def turn2(master, relative_target_heading_deg, target_depth_m, timeout_s, boot_time, verbose=3):
+    print(f"\n=== Turn by {relative_target_heading_deg}° ===")
+    # init timeout
+    time_start = default_timer()
+    time_passed = 0
+
+    # get current depth
+    print("Update position")
+    position = update_position(master, target_depth_m, verbose=verbose)
+    print(f"Heading: {position['heading']}°")
+
+    # calculate desired heading and difference
+    heading_old_deg = position['heading']
+    num_target_full_turns = relative_target_heading_deg // 360
+    fraction_turn_deg = relative_target_heading_deg - num_target_full_turns * 360
+    absolute_target_heading = position['heading'] + fraction_turn_deg
+
+    print(f"Set target turn (relative to the current heading): {relative_target_heading_deg}°")
+    print(f"Current heading: {position['heading']}°")
+    print(f"Target turn (relativ to the current heading): {relative_target_heading_deg}°")
+    print(f"Requires the submarine to turn {num_target_full_turns} time(s) and {fraction_turn_deg}°")
+    print(f"Results in a new absolute heading of {absolute_target_heading:.2f}°")
+
+    # allowed difference between relative target heading and current heading
+    timeout_passed = False
+
+    while not timeout_passed:
+        print("Update position")
+        position = update_position(master, target_depth_m, verbose=verbose)
+        print(f"Target (relative): {relative_target_heading_deg}°")
+        set_target_attitude(position['heading']+180, pitch=0, yaw=0, master=master, boot_time=boot_time)
+        # print the time left for reaching the target depth, before starting to rotate
+        time_passed = default_timer() - time_start
+        print(f"Make turn: {(timeout_s - time_passed):.2f}s until timeout.")
+        print("\n")
+
+        time.sleep(0.1)
+        timeout_passed = time_passed > timeout_s
 
     print(f"\n")
 

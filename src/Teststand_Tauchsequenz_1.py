@@ -28,27 +28,21 @@ def run(conn_type:str="SC2A"):
 
     # init submarine
     helpers.init(master)
-    helpers.check_capabilities(master)
+    helpers.check_capabilities(master, verbose=1)
 
     # set parameters
     target_depth_m = -2
-    timeout_s = 60
+    timeout_s = 30
 
-    # update depth
-    position = helpers.update_position(master, target_depth_m)
-    helpers.print_position(position, target_depth_m)
-
-    # dive to depth
+    # dive to depth using depth hold (alt hold) mode of ardusub
     # available modes: ['STABILIZE', 'ACRO', 'ALT_HOLD', 'AUTO', 'GUIDED', 'CIRCLE', 'SURFACE', 'POSHOLD', 'MANUAL']
     flightmode = 'ALT_HOLD'
-    print(f"Set {flightmode} mode")
+    print(f"\nSet {flightmode} mode\n")
     helpers.change_flightmode(master, mode=flightmode)
     helpers.hold_depth(master, boot_time, target_depth_m, timeout_s, verbose=2)
 
-
-
-    # turn
-    helpers.turn(master, 360, target_depth_m, timeout_s, verbose=0)
+    # turn using manual control
+    helpers.turn(master, 400, target_depth_m, timeout_s, verbose=0)
 
     time_wait_s = 5
     print(f"sleep for {time_wait_s}s to stabilize")
@@ -56,10 +50,7 @@ def run(conn_type:str="SC2A"):
 
     # dive to depth
     target_depth_m = 0
-    helpers.hold_depth(master, boot_time, target_depth_m, timeout_s)
+    helpers.hold_depth(master, boot_time, target_depth_m, timeout_s, verbose=2)
 
-    time_wait_s = 5
-    print(f"sleep for {time_wait_s}s to stabilize")
-    print(time.sleep(time_wait_s))
 
 
