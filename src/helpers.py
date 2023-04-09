@@ -420,7 +420,8 @@ def turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose
     fraction_turn_deg = relative_target_heading_deg - num_target_full_turns * 360
     absolute_target_heading = position['heading'] + fraction_turn_deg
 
-    print(f"""Set target turn (relative to the current heading): {relative_target_heading_deg}°
+    print(f"""
+    Set target turn (relative to the current heading): {relative_target_heading_deg}°
     Current heading: {position['heading']}°
     Target turn (relativ to the current heading): {relative_target_heading_deg}°
     Requires the submarine to turn {num_target_full_turns} time(s) and by {fraction_turn_deg}°
@@ -436,7 +437,7 @@ def turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose
     relative_target_heading_reached = False
 
     while not timeout_passed and not relative_target_heading_reached:
-        print("\rUpdate position", end="")
+        print("\rUpdate position")
         position = update_position(master, target_depth_m, verbose=verbose)
         # print_position(position, target_depth_m)
         heading_new_deg = position['heading']
@@ -459,7 +460,7 @@ def turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose
             num_full_turns_made +=1
 
         print(f"""
-        \rTarget (relative): {relative_target_heading_deg}°
+        Target (relative): {relative_target_heading_deg}°
         Reached (relative): {relative_heading_deg:.2f}°
         Target (absolute): {absolute_target_heading:.2f}°
         Reached (absolute): {heading_new_deg if num_full_turns_made==num_target_full_turns else 0}°
@@ -477,10 +478,10 @@ def turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose
 
         # turn
         if relative_heading_difference_deg > 0:
-            print(f"\r{(power/1000)*100}% power rotating right", end="")
+            print(f"{(power/1000)*100}% power rotating right", end="")
             manual_control(master, x=0, y=0, z=500, r=power)
         if relative_heading_difference_deg < 0:
-            print(f"\r{(power/1000)*100}% power rotating left", end="")
+            print(f"{(power/1000)*100}% power rotating left", end="")
             manual_control(master, x=0, y=0, z=500, r=-power)
 
         heading_old_deg = heading_new_deg
@@ -494,6 +495,7 @@ def turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose
         timeout_passed = time_passed > timeout_s
         relative_target_heading_reached = relative_heading_difference_abs_deg < max_angle_difference_deg
 
+    manual_control(master, x=0, y=0, z=500, r=0)
     print(f"\n")
 
 def set_target_attitude(roll, pitch, yaw, master, boot_time):
