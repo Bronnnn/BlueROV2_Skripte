@@ -4,9 +4,9 @@ import time
 
 def run(conn_type:str="SC2A"):
     """
-    emulates joystick commands to turn
+    uses turn2(): uses set attitude
     """
-    print("Teststand_Tauchsequenz")
+    print("Teststand_Tauchsequenz 2")
 
     print("\nConnecting to autopilot")
     conn_types = {"SC2A": "Surface Computer to Autopilot", "CC2A": "Companion Computer to Autopilot"}

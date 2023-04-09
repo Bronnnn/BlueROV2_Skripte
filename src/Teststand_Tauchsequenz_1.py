@@ -4,7 +4,7 @@ import time
 
 def run(conn_type:str="SC2A"):
     """
-    emulates joystick commands to turn
+    uses turn(): emulates joystick commands
     """
     print("Teststand_Tauchsequenz")
 
@@ -42,7 +42,7 @@ def run(conn_type:str="SC2A"):
     helpers.hold_depth(master, boot_time, target_depth_m, timeout_s, verbose=2)
 
     # turn using manual control
-    helpers.turn(master, 400, target_depth_m, timeout_s, verbose=0)
+    helpers.turn(master, 360, target_depth_m, timeout_s, verbose=0)
 
     time_wait_s = 5
     print(f"sleep for {time_wait_s}s to stabilize")

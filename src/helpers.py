@@ -202,7 +202,7 @@ def recv_parameter(master, timeout=1, param_id = 'SURFACE_DEPTH', verbose = 3):
     while time_passed<timeout:
         try:
             msg = master.recv_match(type=mavpackettype).to_dict()
-            if msg['param_id'] != param_id: Exception
+            if msg['param_id'] != param_id: raise Exception(f"Expected message param id {param_id}. Received message with param id {msg['param_id']}.")
             if verbose>2: print("received")
             break
         except:
@@ -400,6 +400,10 @@ def request_surface_depth_parameter(master):
     )
 
 def turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose=3):
+    """
+    emulates joystick commands to turn. considers angle wrap arounds, when integrating.
+    known issues: sometimes it does not handle angle wraparounds correctly and adds/subtracts 360°
+    """
     print(f"\n=== Turn by {relative_target_heading_deg}° ===")
     # init timeout
     time_start = default_timer()
@@ -416,11 +420,11 @@ def turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose
     fraction_turn_deg = relative_target_heading_deg - num_target_full_turns * 360
     absolute_target_heading = position['heading'] + fraction_turn_deg
 
-    print(f"Set target turn (relative to the current heading): {relative_target_heading_deg}°")
-    print(f"Current heading: {position['heading']}°")
-    print(f"Target turn (relativ to the current heading): {relative_target_heading_deg}°")
-    print(f"Requires the submarine to turn {num_target_full_turns} time(s) and {fraction_turn_deg}°")
-    print(f"Results in a new absolute heading of {absolute_target_heading:.2f}°")
+    print(f"""Set target turn (relative to the current heading): {relative_target_heading_deg}°
+    Current heading: {position['heading']}°
+    Target turn (relativ to the current heading): {relative_target_heading_deg}°
+    Requires the submarine to turn {num_target_full_turns} time(s) and by {fraction_turn_deg}°
+    Results in a new absolute heading of {absolute_target_heading:.2f}°""", end="")
 
     # describes how much the submarines heading changed
     relative_heading_deg = 0
@@ -430,51 +434,53 @@ def turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose
     max_angle_difference_deg = 1
     timeout_passed = False
     relative_target_heading_reached = False
-    angle_wrap = False
 
     while not timeout_passed and not relative_target_heading_reached:
-        print("Update position")
+        print("\rUpdate position", end="")
         position = update_position(master, target_depth_m, verbose=verbose)
         # print_position(position, target_depth_m)
         heading_new_deg = position['heading']
-        standard_request_msg(master, 30)
-        attitude = recv_match(master, 1, "ATTITUDE")
-        yawspeed = attitude['yawspeed']
+        #standard_request_msg(master, 30)
+        #attitude = recv_match(master, 1, "ATTITUDE")
+        #yawspeed = attitude['yawspeed']
         # check if the angle wrapped around (e.g. old_angle = 359° and new_angle = 1°)
-        if yawspeed > 0 and heading_new_deg < heading_old_deg: angle_wrap = True
-        elif yawspeed < 0 and heading_new_deg > heading_old_deg: angle_wrap = True
-        else: angle_wrap = False
+        if heading_new_deg - heading_old_deg < -180: angle_wrap_right_turn = True
+        elif heading_new_deg - heading_old_deg > 180: angle_wrap_left_turn = True
+        else: angle_wrap_left_turn = angle_wrap_right_turn = False
         # with 0.25 % power the yawspeed is roughly 0.07, the limit stops it from falsely detecting wrap arounds
-        if yawspeed > 0.01:
-            if angle_wrap: relative_heading_deg += abs(heading_new_deg - heading_old_deg) - 360
-            if not angle_wrap: relative_heading_deg += abs(heading_new_deg - heading_old_deg)
-        elif yawspeed < 0.01:
-            if angle_wrap: relative_heading_deg -= abs(heading_new_deg - heading_old_deg) - 360
-            if not angle_wrap: relative_heading_deg -= abs(heading_new_deg - heading_old_deg)
-        else:
-            relative_heading_deg += 0
+        if angle_wrap_right_turn: relative_heading_deg += 360 - abs(heading_new_deg - heading_old_deg)
+        elif angle_wrap_left_turn: relative_heading_deg -= 360 - abs(heading_new_deg - heading_old_deg)
+        else: relative_heading_deg += heading_new_deg - heading_old_deg
 
         relative_heading_difference_abs_deg = abs(relative_target_heading_deg-relative_heading_deg)
         relative_heading_difference_deg = relative_target_heading_deg-relative_heading_deg
 
         if relative_heading_deg > 360+num_full_turns_made*360:
             num_full_turns_made +=1
-        print(f"Target (relative): {relative_target_heading_deg}°")
-        print(f"Reached (relative): {relative_heading_deg:.2f}°")
-        print(f"Target (absolute): {num_target_full_turns} turn(s) and {absolute_target_heading:.2f}°")
-        print(f"Reached (absolute): {num_full_turns_made} turn(s) and {heading_new_deg if num_full_turns_made==num_target_full_turns else 0}°")
+
+        print(f"""
+        \rTarget (relative): {relative_target_heading_deg}°
+        Reached (relative): {relative_heading_deg:.2f}°
+        Target (absolute): {absolute_target_heading:.2f}°
+        Reached (absolute): {heading_new_deg if num_full_turns_made==num_target_full_turns else 0}°
+        Target (num complete turns): {num_target_full_turns}
+        Reached (num complete turns): {num_full_turns_made}""", end="")
 
         # reduce power when close to target, to not overshoot (could have made a more sophisticated approach with pid
-        # controller and such but this works aswell)
+        # controller and such but this works aswell since our requirements are not that high)
         power = 500
-        if relative_heading_difference_abs_deg < 60: power = 250
+        if relative_heading_difference_abs_deg < 60:
+            power_tuning_factor = abs(1-relative_heading_deg/relative_target_heading_deg)
+            if power_tuning_factor > 1: power_tuning_factor = 1
+            power = int(power_tuning_factor*power)
+            if power < 250: power = 250
 
         # turn
         if relative_heading_difference_deg > 0:
-            print(f"{(power/1000)*100}% power rotating right")
+            print(f"\r{(power/1000)*100}% power rotating right", end="")
             manual_control(master, x=0, y=0, z=500, r=power)
         if relative_heading_difference_deg < 0:
-            print(f"{(power/1000)*100}% power rotating left")
+            print(f"\r{(power/1000)*100}% power rotating left", end="")
             manual_control(master, x=0, y=0, z=500, r=-power)
 
         heading_old_deg = heading_new_deg
@@ -484,7 +490,7 @@ def turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose
         print(f"Make turn: {(timeout_s - time_passed):.2f}s until timeout.")
         print("\n")
 
-        time.sleep(0.1)
+        #time.sleep(0.5)
         timeout_passed = time_passed > timeout_s
         relative_target_heading_reached = relative_heading_difference_abs_deg < max_angle_difference_deg
 
@@ -507,6 +513,12 @@ def set_target_attitude(roll, pitch, yaw, master, boot_time):
     )
 
 def turn2(master, relative_target_heading_deg, target_depth_m, timeout_s, boot_time, verbose=3):
+    """
+    uses set attitude (with ignore throttle so that the depth hold controller can still work as in the example:
+    https://www.ardusub.com/developers/pymavlink.html#set-target-depthattitude described), in combination with
+    set target depth, sending the commands with more than 1 Hz.
+    known issues: as soon as it starts turning with the set attitude command, the submarine no longer holds its depth.
+    """
     print(f"\n=== Turn by {relative_target_heading_deg}° ===")
     # init timeout
     time_start = default_timer()
@@ -518,32 +530,34 @@ def turn2(master, relative_target_heading_deg, target_depth_m, timeout_s, boot_t
     print(f"Heading: {position['heading']}°")
 
     # calculate desired heading and difference
+    step_deg = 10
     heading_old_deg = position['heading']
     num_target_full_turns = relative_target_heading_deg // 360
-    fraction_turn_deg = relative_target_heading_deg - num_target_full_turns * 360
-    absolute_target_heading = position['heading'] + fraction_turn_deg
+    num_target_step_turns = relative_target_heading_deg // step_deg
+    fraction_turn_deg = relative_target_heading_deg - num_target_step_turns * 10
 
     print(f"Set target turn (relative to the current heading): {relative_target_heading_deg}°")
     print(f"Current heading: {position['heading']}°")
     print(f"Target turn (relativ to the current heading): {relative_target_heading_deg}°")
     print(f"Requires the submarine to turn {num_target_full_turns} time(s) and {fraction_turn_deg}°")
-    print(f"Results in a new absolute heading of {absolute_target_heading:.2f}°")
+
 
     # allowed difference between relative target heading and current heading
     timeout_passed = False
 
-    while not timeout_passed:
+    for target in range(num_target_step_turns):
         print("Update position")
         position = update_position(master, target_depth_m, verbose=verbose)
-        print(f"Target (relative): {relative_target_heading_deg}°")
-        set_target_attitude(position['heading']+180, pitch=0, yaw=0, master=master, boot_time=boot_time)
-        # print the time left for reaching the target depth, before starting to rotate
-        time_passed = default_timer() - time_start
-        print(f"Make turn: {(timeout_s - time_passed):.2f}s until timeout.")
+        print(f"Target Heading (relative): {relative_target_heading_deg}°")
+        print(f"Reached Heading (relative): {position['heading']}")
+        #manual_control(master, x=0, y=0, z=500, r=0)
+        set_target_attitude(roll=0, pitch=0, yaw=position['heading']+target*step_deg, master=master, boot_time=boot_time)
+        #for i in range(10):
+        #    set_target_depth(target_depth_m, master, boot_time)
+        #    time.sleep(0.1)
+        #manual_control(master, x=0, y=0, z=500, r=0)
         print("\n")
 
-        time.sleep(0.1)
-        timeout_passed = time_passed > timeout_s
 
     print(f"\n")
 

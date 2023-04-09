@@ -9,6 +9,6 @@ from src import Teststand_Tauchsequenz_2
 if __name__ == '__main__':
     # helpers.hello_world()
     #Teststand_Motorsequenz.run(conn_type=sys.argv[1])
-    #Teststand_Tauchsequenz.run(conn_type=sys.argv[1])
-    #Teststand_Tauchsequenz_1.run(conn_type="SC2A")
-    Teststand_Tauchsequenz_2.run(conn_type="SC2A")
+    #Teststand_Tauchsequenz_1.run(conn_type=sys.argv[1])
+    Teststand_Tauchsequenz_1.run(conn_type="SC2A")
+    #Teststand_Tauchsequenz_2.run(conn_type="SC2A")
