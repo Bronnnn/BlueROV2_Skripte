@@ -441,14 +441,12 @@ def turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose
         position = update_position(master, target_depth_m, verbose=verbose)
         # print_position(position, target_depth_m)
         heading_new_deg = position['heading']
-        #standard_request_msg(master, 30)
-        #attitude = recv_match(master, 1, "ATTITUDE")
-        #yawspeed = attitude['yawspeed']
-        # check if the angle wrapped around (e.g. old_angle = 359° and new_angle = 1°)
+        # check if the angle wrapped around (e.g. old_angle = 359° and new_angle = 1°).
+        # assuming it turns slow enough, so that it doesnt turn by more
+        # than 180° before a new heading reading is being compared.
         if heading_new_deg - heading_old_deg < -180: angle_wrap_right_turn = True
         elif heading_new_deg - heading_old_deg > 180: angle_wrap_left_turn = True
         else: angle_wrap_left_turn = angle_wrap_right_turn = False
-        # with 0.25 % power the yawspeed is roughly 0.07, the limit stops it from falsely detecting wrap arounds
         if angle_wrap_right_turn: relative_heading_deg += 360 - abs(heading_new_deg - heading_old_deg)
         elif angle_wrap_left_turn: relative_heading_deg -= 360 - abs(heading_new_deg - heading_old_deg)
         else: relative_heading_deg += heading_new_deg - heading_old_deg

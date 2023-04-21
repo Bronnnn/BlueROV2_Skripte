@@ -6,7 +6,7 @@ def run(conn_type:str="SC2A"):
     """
     uses turn(): emulates joystick commands
     """
-    print("Teststand_Tauchsequenz")
+    print("Teststand_Tauchsequenz 1")
 
     print("\nConnecting to autopilot")
     conn_types = {"SC2A": "Surface Computer to Autopilot", "CC2A": "Companion Computer to Autopilot"}
