@@ -4,9 +4,9 @@ import time
 
 def run(conn_type:str="SC2A"):
     """
-    uses turn2(): uses set attitude
+    uses turn(): emulates joystick commands
     """
-    print("Teststand_Tauchsequenz 2")
+    print("Teststand_Tauchsequenz 1")
 
     print("\nConnecting to autopilot")
     conn_types = {"SC2A": "Surface Computer to Autopilot", "CC2A": "Companion Computer to Autopilot"}
@@ -31,23 +31,11 @@ def run(conn_type:str="SC2A"):
     helpers.check_capabilities(master, verbose=1)
 
     # set parameters
-    target_depth_m = -2
-    timeout_s = 30
-
-    # dive to depth using depth hold (alt hold) mode of ardusub
-    # available modes: ['STABILIZE', 'ACRO', 'ALT_HOLD', 'AUTO', 'GUIDED', 'CIRCLE', 'SURFACE', 'POSHOLD', 'MANUAL']
-    flightmode = 'ALT_HOLD'
-    print(f"\nSet {flightmode} mode\n")
-    helpers.change_flightmode(master, mode=flightmode)
-    helpers.hold_depth(master, boot_time, target_depth_m, timeout_s, verbose=2)
-
-    # turn using set attitude
-    helpers.turn2(master, 400, target_depth_m, timeout_s, boot_time, verbose=0)
-
-    time_wait_s = 5
-    print(f"sleep for {time_wait_s}s to stabilize")
-    print(time.sleep(time_wait_s))
-
-    # dive to depth
-    target_depth_m = 0
-    helpers.hold_depth(master, boot_time, target_depth_m, timeout_s, verbose=2)
+    for step in range(10):
+        depth_m = step
+        print(f"Set surface depth to {step}m")
+        helpers.set_surface_depth_parameter(master = master, depth_m = depth_m)
+        msg = helpers.recv_parameter(master = master, timeout = 1, param_id = "SURFACE_DEPTH", verbose = 3)
+        print(f"Received msg: {msg}")
+        print("Sleep 2 seconds")
+        time.sleep(2)
