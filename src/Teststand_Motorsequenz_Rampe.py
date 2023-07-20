@@ -19,7 +19,7 @@ def run(conn_type:str="SC2A"):
     *DO NOT* run thrusters for longer than 30 seconds in air or you will wear out the plastic bearings.
     Source: https://bluerobotics.com/learn/bluerov2-software-setup/
 
-    Here: 3 * 2s per direction and 4 different directions = 24s (plus 4s of sleep time between each direction)
+    Here: 3 * 2s per direction and 4 different directions = 24s (plus sleep time)
     """
     print("Teststand_Motorsequenz_Rampe")
     print("'Ctrl + C' to disarm the BlueROV and exit the script")
@@ -43,7 +43,7 @@ def run(conn_type:str="SC2A"):
         print(f"{conn_type} caused unexpected error.")
         return(0)
 
-    # register the lambda funtion, to handle the ctrl+c signal
+    # register the lambda function, to handle the ctrl+c signal
     signal.signal(signal.SIGINT, lambda signal, frame: exit_func(signal, frame, master))
 
     # clean up (disarm)
@@ -65,7 +65,7 @@ def run(conn_type:str="SC2A"):
     helpers.arm(master)
 
     # init timer
-    for speed in np.arange(start = 500, stop = 460, step = 10):
+    for speed in np.arange(start = 500, stop = 0, step = 100):
         time_start = default_timer()
         time_passed = 0
         timeout_s = 2
