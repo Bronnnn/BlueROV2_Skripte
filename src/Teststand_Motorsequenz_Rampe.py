@@ -65,10 +65,10 @@ def run(conn_type:str="SC2A"):
         time_passed = 0
         timeout_s = 2
         print(f"z = {speed} (down; neutral 500)")
-        print(f"{time_passed / timeout_s}s")
         while time_passed < timeout_s:
             helpers.manual_control(master, x=0, y=0, z=speed, r=0)
             time_passed = default_timer() - time_start
+            print(f"{time_passed}s/{timeout_s}s")
         sleep_time_s = 4
         print(f"sleeping {sleep_time_s}s")
         time.sleep(sleep_time_s)
@@ -79,10 +79,10 @@ def run(conn_type:str="SC2A"):
         time_passed = 0
         timeout_s = 2
         print(f"r = {speed} (rotating right)")
-        print(f"{time_passed / timeout_s}s")
         while time_passed < timeout_s:
             helpers.manual_control(master, x=0, y=0, z=500, r=speed)
             time_passed = default_timer() - time_start
+            print(f"{time_passed}s/{timeout_s}s")
         sleep_time_s = 4
         print(f"sleeping {sleep_time_s}s")
         time.sleep(sleep_time_s)
@@ -93,10 +93,10 @@ def run(conn_type:str="SC2A"):
         time_passed = 0
         timeout_s = 2
         print(f"x = {speed} (forward)")
-        print(f"{time_passed / timeout_s}s")
         while time_passed < timeout_s:
             helpers.manual_control(master, x=speed, y=0, z=500, r=0)
             time_passed = default_timer() - time_start
+            print(f"{time_passed}s/{timeout_s}s")
         sleep_time_s = 4
         print(f"sleeping {sleep_time_s}s")
         time.sleep(sleep_time_s)
@@ -107,10 +107,10 @@ def run(conn_type:str="SC2A"):
         time_passed = 0
         timeout_s = 2
         print(f"y = {speed} (sideways, right)")
-        print(f"{time_passed/timeout_s}s")
         while time_passed < timeout_s:
             helpers.manual_control(master, x=0, y=speed, z=500, r=0)
             time_passed = default_timer() - time_start
+            print(f"{time_passed}s/{timeout_s}s")
         sleep_time_s = 4
         print(f"sleeping {sleep_time_s}s")
         time.sleep(sleep_time_s)
