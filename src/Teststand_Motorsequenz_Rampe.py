@@ -65,7 +65,7 @@ def run(conn_type:str="SC2A"):
     helpers.arm(master)
 
     # init timer
-    for speed in np.arange(start = 500, stop = 0, step = 100):
+    for speed in np.arange(start = 500, stop = 100, step = 50):
         time_start = default_timer()
         time_passed = 0
         timeout_s = 2
