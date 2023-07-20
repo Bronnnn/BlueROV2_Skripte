@@ -37,7 +37,7 @@ def run(conn_type:str="SC2A"):
         return(0)
 
     # register exit funtion to handle the ctrl+c signal
-    signal.signal(signal.SIGINT, exit_func, master)
+    signal.signal(signal.SIGINT, exit_func)
 
     # clean up (disarm)
     print("Inital state")
