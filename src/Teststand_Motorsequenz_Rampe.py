@@ -17,6 +17,8 @@ def run(conn_type:str="SC2A"):
     emulates joystick commands and slowly ramps them up
     """
     print("Teststand_Motorsequenz_Rampe")
+    print("'Ctrl + C' to disarm the BlueROV and exit the script")
+    time.sleep(2)
 
     print("\nConnecting to autopilot")
     conn_types = {"SC2A": "Surface Computer to Autopilot", "CC2A": "Companion Computer to Autopilot"}
@@ -36,8 +38,8 @@ def run(conn_type:str="SC2A"):
         print(f"{conn_type} caused unexpected error.")
         return(0)
 
-    # register exit funtion to handle the ctrl+c signal
-    signal.signal(signal.SIGINT, exit_func)
+    # register the lambda funtion, to handle the ctrl+c signal
+    signal.signal(signal.SIGINT, lambda signal, frame: exit_func(signal, frame, master))
 
     # clean up (disarm)
     print("Inital state")
