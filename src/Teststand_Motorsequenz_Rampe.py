@@ -15,6 +15,11 @@ def exit_func(signal, frame, master):
 def run(conn_type:str="SC2A"):
     """
     emulates joystick commands and slowly ramps them up
+
+    *DO NOT* run thrusters for longer than 30 seconds in air or you will wear out the plastic bearings.
+    Source: https://bluerobotics.com/learn/bluerov2-software-setup/
+
+    Here: 3 * 2s per direction and 4 different directions = 24s (plus 4s of sleep time between each direction)
     """
     print("Teststand_Motorsequenz_Rampe")
     print("'Ctrl + C' to disarm the BlueROV and exit the script")
@@ -60,7 +65,7 @@ def run(conn_type:str="SC2A"):
     helpers.arm(master)
 
     # init timer
-    for speed in np.arange(start = 500, stop = 450, step = 10):
+    for speed in np.arange(start = 500, stop = 460, step = 10):
         time_start = default_timer()
         time_passed = 0
         timeout_s = 2
@@ -73,7 +78,7 @@ def run(conn_type:str="SC2A"):
         time.sleep(sleep_time_s)
 
     # init timer
-    for speed in np.arange(start=0, stop=50, step=10):
+    for speed in np.arange(start=0, stop=40, step=10):
         time_start = default_timer()
         time_passed = 0
         timeout_s = 2
@@ -86,7 +91,7 @@ def run(conn_type:str="SC2A"):
         time.sleep(sleep_time_s)
 
     # init timer
-    for speed in np.arange(start=0, stop=50, step=10):
+    for speed in np.arange(start=0, stop=40, step=10):
         time_start = default_timer()
         time_passed = 0
         timeout_s = 2
@@ -99,7 +104,7 @@ def run(conn_type:str="SC2A"):
         time.sleep(sleep_time_s)
 
     # init timer
-    for speed in np.arange(start=0, stop=50, step=10):
+    for speed in np.arange(start=0, stop=40, step=10):
         time_start = default_timer()
         time_passed = 0
         timeout_s = 2
