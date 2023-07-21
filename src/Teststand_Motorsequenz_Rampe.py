@@ -115,3 +115,7 @@ def run(conn_type:str="SC2A"):
         sleep_time_s = 4
         print(f"sleeping {sleep_time_s}s")
         time.sleep(sleep_time_s)
+
+    # clean up (disarm)
+    print("Inital state")
+    helpers.disarm(master)
