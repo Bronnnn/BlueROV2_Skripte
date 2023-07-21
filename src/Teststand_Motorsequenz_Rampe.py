@@ -64,8 +64,8 @@ def run(conn_type:str="SC2A"):
     # arm ardusub
     helpers.arm(master)
 
-    # init timer
-    for speed in np.arange(start = 500, stop = 460, step = -10):
+    for speed in np.arange(start=500, stop=460, step=-10):
+        # init timer
         time_start = default_timer()
         time_passed = 0
         timeout_s = 2
@@ -77,8 +77,8 @@ def run(conn_type:str="SC2A"):
         print(f"sleeping {sleep_time_s}s")
         time.sleep(sleep_time_s)
 
-    # init timer
     for speed in np.arange(start=0, stop=40, step=10):
+        # init timer
         time_start = default_timer()
         time_passed = 0
         timeout_s = 2
@@ -90,8 +90,8 @@ def run(conn_type:str="SC2A"):
         print(f"sleeping {sleep_time_s}s")
         time.sleep(sleep_time_s)
 
-    # init timer
     for speed in np.arange(start=0, stop=40, step=10):
+        # init timer
         time_start = default_timer()
         time_passed = 0
         timeout_s = 2
@@ -103,8 +103,8 @@ def run(conn_type:str="SC2A"):
         print(f"sleeping {sleep_time_s}s")
         time.sleep(sleep_time_s)
 
-    # init timer
     for speed in np.arange(start=0, stop=40, step=10):
+        # init timer
         time_start = default_timer()
         time_passed = 0
         timeout_s = 2
