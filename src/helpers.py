@@ -564,3 +564,19 @@ def turn2(master, relative_target_heading_deg, target_depth_m, timeout_s, boot_t
 def hello_world():
     print("hello world")
     print(f"current working dir: {os.getcwd()}")
+
+def change_ROV_speed(master, speed:int=0):
+    """
+    sends command MAV_CMD_GUIDED_CHANGE_SPEED (43000) with specified speed
+    message id's and their description can be found on https://mavlink.io/en/messages/common.html
+    
+    https://mavlink.io/en/messages/ardupilotmega.html#MAV_CMD_GUIDED_CHANGE_SPEED
+    """
+    master.mav.command_long_send(
+        target_system=master.target_system,         #Target System: MAVLink system id of the vehicle (normally "1")
+        target_component=master.target_component,   #Target Components: Normally "0"
+        command=43000,                              #Command: MAV_CMD_GUIDED_CHANGE_SPEED
+        confirmation=0,                             #Confirmation
+        param1=0,                                   #Param 1: speed type (0 = Airspeed)
+        param2=speed,                               #Param 2: speed target in [m/s]
+        param3=0, param4=0, param5=0, param6=0, param7=0) #Param 3 to 7: not used
