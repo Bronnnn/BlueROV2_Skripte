@@ -565,10 +565,9 @@ def hello_world():
     print("hello world")
     print(f"current working dir: {os.getcwd()}")
 
-def change_ROV_speed(master, speed:int=0):
+def send_cmd_guided_change_speed(master, speed:int=0):
     """
-    sends command MAV_CMD_GUIDED_CHANGE_SPEED (43000) with specified speed
-    message id's and their description can be found on https://mavlink.io/en/messages/common.html
+    sends command MAV_CMD_GUIDED_CHANGE_SPEED (43000) from ardupilotmega dialect
     
     https://mavlink.io/en/messages/ardupilotmega.html#MAV_CMD_GUIDED_CHANGE_SPEED
     """
@@ -577,6 +576,36 @@ def change_ROV_speed(master, speed:int=0):
         target_component=master.target_component,   #Target Components: Normally "0"
         command=43000,                              #Command: MAV_CMD_GUIDED_CHANGE_SPEED
         confirmation=0,                             #Confirmation
-        param1=0,                                   #Param 1: speed type (0 = Airspeed)
+        param1=1,                                   #Param 1: speed type (0 = Airspeed, = Groundspeed)
         param2=speed,                               #Param 2: speed target in [m/s]
         param3=0, param4=0, param5=0, param6=0, param7=0) #Param 3 to 7: not used
+        
+def send_cmd_guided_change_speed(master, speed:int=0, throttle:int=0):
+    """
+    sends command MAV_CMD_DO_CHANGE_SPEED (178)
+    https://mavlink.io/en/messages/ardupilotmega.html#MAV_CMD_GUIDED_CHANGE_SPEED
+    """
+    master.mav.command_long_send(
+        target_system=master.target_system,         #Target System: MAVLink system id of the vehicle (normally "1")
+        target_component=master.target_component,   #Target Components: Normally "0"
+        command=178,                                #Command: MAV_CMD_DO_CHANGE_SPEED
+        confirmation=0,                             #Confirmation
+        param1=1,                                   #Param 1: Speed type (0=Airspeed, 1=Ground Speed, 2=Climb Speed, 3=Descent Speed)
+        param2=speed,                               #Param 2: Speed (-1 indicates no change, -2 indicates return to default vehicle speed)
+        param3=throttle,                            #Param 3: Throttle (-1 indicates no change, -2 indicates return to default vehicle throttle value)
+        param4=0, param5=0, param6=0, param7=0)     #Param 3 to 7: not used
+   
+def send_cmd_set_servo(master, servo:int=0, pwm:int=0):
+    """
+    sends command MAV_CMD_DO_SET_SERVO (183)    
+    https://mavlink.io/en/messages/common.html#MAV_CMD_DO_SET_SERVO
+    """
+    master.mav.command_long_send(
+        target_system=master.target_system,         #Target System: MAVLink system id of the vehicle (normally "1")
+        target_component=master.target_component,   #Target Components: Normally "0"
+        command=183,                                #Command: MAV_CMD_DO_SET_SERVO
+        confirmation=0,                             #Confirmation
+        param1=servo,                               #Param 1: Servo instance number 
+        param2=pwm,                                 #Param 2: Pulse Width Modulation [us]
+        param3=0, param4=0, param5=0, param6=0, param7=0) #Param 3 to 7: not used
+   
