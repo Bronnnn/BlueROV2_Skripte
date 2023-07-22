@@ -67,13 +67,24 @@ def run(conn_type:str="SC2A"):
 
     ### BEGIN USER CODE ###
     
+    # (1) Set servo 1 to 1400 us
+     print("\nSending MAV_CMD_DO_SET_SERVO (178) to servo 1 with 1400us")
+    helpers.send_cmd_set_servo(master, 1, 1400)
     
+    # (2) Wait 5s
+    print("\nWait 5 seconds...")
+    time_start = default_timer()
+    countdown = 5
+    while (default_timer() - time_start < countdown):
+        print(round(countdown - (default_timer() - time_start)))
+        time.sleep(1)    
+       
     
-    ### INSERT CODE HERE ###
+    """ MAV_CMD_GUIDED_CHANGE_SPEED
     
     # (1) Set speed to 1 m/s
-    print("\nSending Command #43.000 with 1m/s")
-    helpers.change_ROV_speed(master, 1)
+    print("\nSending MAV_CMD_GUIDED_CHANGE_SPEED (43000) with 1 m/s")
+    helpers.send_cmd_guided_change_speed(master, 1)
     
     # (2) Wait 5s
     print("\nWait 5 seconds...")
@@ -84,13 +95,13 @@ def run(conn_type:str="SC2A"):
         time.sleep(1)
     
     # (3) Set speed back to 0 m/s
-    print("\nSending Command #43.000 with 1m/s")
-    helpers.change_ROV_speed(master, 0)
-    
+    print("\nSending MAV_CMD_GUIDED_CHANGE_SPEED (43000) with 0 m/s")
+    helpers.send_cmd_guided_change_speed(master, 0)
+    """
     
     ### END USER CODE ###
     
 
     # clean up (disarm)
-    print("Inital state")
+    print("Program finished.")
     helpers.disarm(master)
