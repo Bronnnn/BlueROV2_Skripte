@@ -138,7 +138,7 @@ def set_target_attitude(roll, pitch, yaw, master, boot_time):
         0, 0, 0, 0  # roll rate, pitch rate, yaw rate, thrust
     )
 
-def standard_request_msg(master, mavlink_msg_id:int=29, param2:int=0):
+def standard_request_msg(master, mavlink_msg_id, param2:int=0):
     """
     sends command MAV_CMD_REQUEST_MESSAGE (512)
     message id's and their description can be found on https://mavlink.io/en/messages/common.html
@@ -171,6 +171,19 @@ def create_master_SurfaceComputer2Autopilot(timeout:int=5, addr:str="127.0.0.1:1
 
     return master, boot_time
 
+def create_master_CompanionComputer2Autopilot(addr:str="0.0.0.0:14001"):
+    """
+    Companion is already configured to allow script connections under the port 9000
+    Note: The connection is done with 'udpout' and not 'udpin'.
+    You can check in http:192.168.1.2:2770/mavproxy that the communication made for 9000
+    uses a 'udp' (server) and not 'udpout' (client).
+    """
+    master = mavutil.mavlink_connection('udpout:'+addr)
+
+    boot_time = time.time()
+
+    return master, boot_time
+    
 def recv_match(master, timeout=1, mavpackettype = 'ATTITUDE', verbose = 3):
     # init timeout
     time_start = default_timer()
@@ -211,20 +224,6 @@ def recv_parameter(master, timeout=1, param_id = 'SURFACE_DEPTH', verbose = 3):
         time.sleep(0.1)
 
     return msg
-
-def create_master_CompanionComputer2Autopilot(addr:str="0.0.0.0:14001"):
-    """
-    Companion is already configured to allow script connections under the port 9000
-    Note: The connection is done with 'udpout' and not 'udpin'.
-    You can check in http:192.168.1.2:2770/mavproxy that the communication made for 9000
-    uses a 'udp' (server) and not 'udpout' (client).
-    """
-    master = mavutil.mavlink_connection('udpout:'+addr)
-
-    boot_time = time.time()
-
-    return master, boot_time
-
 
 def wait_conn(master):
     """

@@ -8,11 +8,11 @@ import time
 
 def exit_func(signal, frame, master):
     print("Disarming before exiting")
-    helpers.disarm(master)
+    disarm(master)
     print("Exiting")
     sys.exit(0)
-
-def run(conn_type:str="SC2A"):
+    
+def run(conn_type:str="CC2A"):
     """
     emulates joystick commands and slowly ramps them up
 
@@ -43,6 +43,7 @@ def run(conn_type:str="SC2A"):
         print(f"{conn_type} caused unexpected error.")
         return(0)
 
+    print(f"Connection type: {conn_type}")
     # register the lambda function, to handle the ctrl+c signal
     signal.signal(signal.SIGINT, lambda signal, frame: exit_func(signal, frame, master))
 
@@ -51,7 +52,7 @@ def run(conn_type:str="SC2A"):
     helpers.disarm(master)
 
     # available modes: ['STABILIZE', 'ACRO', 'ALT_HOLD', 'AUTO', 'GUIDED', 'CIRCLE', 'SURFACE', 'POSHOLD', 'MANUAL']
-    flightmode = 'STABILIZE'
+    flightmode = 'MANUAL'
     print(f"Set {flightmode} mode")
     helpers.change_flightmode(master, mode=flightmode)
 
@@ -64,7 +65,7 @@ def run(conn_type:str="SC2A"):
     # arm ardusub
     helpers.arm(master)
 
-    for speed in np.arange(start=500, stop=460, step=-10):
+    for speed in np.arange(start=500, stop=400, step=-25):
         # init timer
         time_start = default_timer()
         time_passed = 0
@@ -73,11 +74,12 @@ def run(conn_type:str="SC2A"):
         while time_passed < timeout_s:
             helpers.manual_control(master, x=0, y=0, z=speed, r=0)
             time_passed = default_timer() - time_start
+            time.sleep(0.05)
         sleep_time_s = 4
         print(f"sleeping {sleep_time_s}s")
         time.sleep(sleep_time_s)
 
-    for speed in np.arange(start=0, stop=40, step=10):
+    for speed in np.arange(start=0, stop=100, step=20):
         # init timer
         time_start = default_timer()
         time_passed = 0
@@ -86,11 +88,12 @@ def run(conn_type:str="SC2A"):
         while time_passed < timeout_s:
             helpers.manual_control(master, x=0, y=0, z=500, r=speed)
             time_passed = default_timer() - time_start
+            time.sleep(0.05)
         sleep_time_s = 4
         print(f"sleeping {sleep_time_s}s")
         time.sleep(sleep_time_s)
 
-    for speed in np.arange(start=0, stop=40, step=10):
+    for speed in np.arange(start=0, stop=100, step=20):
         # init timer
         time_start = default_timer()
         time_passed = 0
@@ -99,11 +102,12 @@ def run(conn_type:str="SC2A"):
         while time_passed < timeout_s:
             helpers.manual_control(master, x=speed, y=0, z=500, r=0)
             time_passed = default_timer() - time_start
+            time.sleep(0.05)
         sleep_time_s = 4
         print(f"sleeping {sleep_time_s}s")
         time.sleep(sleep_time_s)
 
-    for speed in np.arange(start=0, stop=40, step=10):
+    for speed in np.arange(start=0, stop=10, step=20):
         # init timer
         time_start = default_timer()
         time_passed = 0
@@ -112,6 +116,7 @@ def run(conn_type:str="SC2A"):
         while time_passed < timeout_s:
             helpers.manual_control(master, x=0, y=speed, z=500, r=0)
             time_passed = default_timer() - time_start
+            time.sleep(0.05)
         sleep_time_s = 4
         print(f"sleeping {sleep_time_s}s")
         time.sleep(sleep_time_s)

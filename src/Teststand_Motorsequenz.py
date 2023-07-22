@@ -1,7 +1,14 @@
 from src import helpers
 from timeit import default_timer
 import time
+import signal
 
+def exit_func(signal, frame, master):
+    print("Disarming before exiting")
+    disarm(master)
+    print("Exiting")
+    sys.exit(0)
+    
 def run(conn_type:str="SC2A"):
     """
     emulates joystick commands
@@ -25,13 +32,19 @@ def run(conn_type:str="SC2A"):
     else:
         print(f"{conn_type} caused unexpected error.")
         return(0)
+    
+    # Print chosen connection type
+    print(f"Connection type: {conn_type}")
+    
+    # register the lambda function, to handle the ctrl+c signal
+    signal.signal(signal.SIGINT, lambda signal, frame: exit_func(signal, frame, master))
 
     # clean up (disarm)
     print("Inital state")
     helpers.disarm(master)
 
     # available modes: ['STABILIZE', 'ACRO', 'ALT_HOLD', 'AUTO', 'GUIDED', 'CIRCLE', 'SURFACE', 'POSHOLD', 'MANUAL']
-    flightmode = 'STABILIZE'
+    flightmode = 'MANUAL'
     print(f"Set {flightmode} mode")
     helpers.change_flightmode(master, mode=flightmode)
 
@@ -50,7 +63,7 @@ def run(conn_type:str="SC2A"):
     timeout_s = 5
     print("medium speed down")
     while time_passed < timeout_s:
-        helpers.manual_control(master, x=0, y=0, z=250, r=0)
+        helpers.manual_control(master, x=0, y=0, z=450, r=0)
         time_passed = default_timer() - time_start
 
     # init timer
@@ -59,7 +72,7 @@ def run(conn_type:str="SC2A"):
     timeout_s = 5
     print("medium speed rotating right")
     while time_passed < timeout_s:
-        helpers.manual_control(master, x=0, y=0, z=500, r=500)
+        helpers.manual_control(master, x=0, y=0, z=500, r=100)
         time_passed = default_timer() - time_start
 
     # init timer
@@ -68,7 +81,7 @@ def run(conn_type:str="SC2A"):
     timeout_s = 5
     print("medium speed forward")
     while time_passed < timeout_s:
-        helpers.manual_control(master, x=500, y=0, z=500, r=0)
+        helpers.manual_control(master, x=100, y=0, z=500, r=0)
         time_passed = default_timer() - time_start
 
     # init timer
@@ -77,5 +90,5 @@ def run(conn_type:str="SC2A"):
     timeout_s = 5
     print("medium speed sideways right")
     while time_passed < timeout_s:
-        helpers.manual_control(master, x=0, y=500, z=500, r=0)
+        helpers.manual_control(master, x=0, y=100, z=500, r=0)
         time_passed = default_timer() - time_start
