@@ -1,3 +1,5 @@
+import sys
+
 from src import helpers
 from timeit import default_timer
 import time
@@ -5,7 +7,7 @@ import signal
 
 def exit_func(signal, frame, master):
     print("Disarming before exiting")
-    disarm(master)
+    helpers.disarm(master)
     print("Exiting")
     sys.exit(0)
     
