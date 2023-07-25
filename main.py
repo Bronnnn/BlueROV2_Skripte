@@ -13,11 +13,12 @@ from src import Teststand_Tauchsequenz_4
 # Sonstiges
 from src import Teststand_setTargetDepth_Experiment
 from src import ROV_Speedtest
+from src import Print_Heading
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     available_sequences = ["Teststand_Motorsequenz", "Teststand_Tauchsequenz_1", "Teststand_Tauchsequenz_2",
-                           "Teststand_Tauchsequenz_3", "Teststand_Tauchsequenz_4",
+                           "Teststand_Tauchsequenz_3", "Teststand_Tauchsequenz_4", "Print_Heading",
                            "Teststand_setTargetDepth_Experiment", "Teststand_Motorsequenz_Rampe", "ROV_Speedtest"]
     available_connection_types = {"SC2A": "Surface Computer to Autopilot", "CC2A": "Companion Computer to Autopilot"}
     if len(sys.argv)<3:
@@ -45,6 +46,8 @@ if __name__ == '__main__':
         Teststand_Motorsequenz_Rampe.run(conn_type=conn_type)
     elif sequence_name == "ROV_Speedtest":
         ROV_Speedtest.run(conn_type=conn_type)
+    elif sequence_name == "Print_Heading":
+        Print_Heading.run(conn_type=conn_type)
     else:
         print(f"{sequence_name} not a valid sequence name. "
               f"List of available sequence names: {available_sequences}")
