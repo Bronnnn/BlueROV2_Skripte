@@ -69,23 +69,31 @@ def run(conn_type:str="CC2A"):
         # init timer
         time_start = default_timer()
         time_passed = 0
-        timeout_s = 2
-        print(f"z = {speed} (down; neutral 500) for {timeout_s}s")
-        while time_passed < timeout_s:
+        run_s = 2
+        print(f"z = {speed} (down; neutral 500) for {run_s}s")
+        while time_passed < run_s:
             helpers.manual_control(master, x=0, y=0, z=speed, r=0)
             time_passed = default_timer() - time_start
             #time.sleep(0.05)
         sleep_time_s = 4
+
+        # init timer
+        time_start = default_timer()
+        time_passed = 0
+        sleep_s = 2
         print(f"sleeping {sleep_time_s}s")
-        time.sleep(sleep_time_s)
+        while time_passed < sleep_s:
+            helpers.manual_control(master, x=0, y=0, z=500, r=0)
+            time_passed = default_timer() - time_start
+        #time.sleep(sleep_time_s)
 
     for speed in np.arange(start=0, stop=75, step=25):
         # init timer
         time_start = default_timer()
         time_passed = 0
-        timeout_s = 2
-        print(f"r = {speed} (rotating right) for {timeout_s}s")
-        while time_passed < timeout_s:
+        run_s = 2
+        print(f"r = {speed} (rotating right) for {run_s}s")
+        while time_passed < run_s:
             helpers.manual_control(master, x=0, y=0, z=500, r=speed)
             time_passed = default_timer() - time_start
             #time.sleep(0.05)
@@ -97,9 +105,9 @@ def run(conn_type:str="CC2A"):
         # init timer
         time_start = default_timer()
         time_passed = 0
-        timeout_s = 2
-        print(f"x = {speed} (forward) for {timeout_s}s")
-        while time_passed < timeout_s:
+        run_s = 2
+        print(f"x = {speed} (forward) for {run_s}s")
+        while time_passed < run_s:
             helpers.manual_control(master, x=speed, y=0, z=500, r=0)
             time_passed = default_timer() - time_start
             #time.sleep(0.05)
@@ -111,9 +119,9 @@ def run(conn_type:str="CC2A"):
         # init timer
         time_start = default_timer()
         time_passed = 0
-        timeout_s = 2
-        print(f"y = {speed} (sideways, right) for {timeout_s}s")
-        while time_passed < timeout_s:
+        run_s = 2
+        print(f"y = {speed} (sideways, right) for {run_s}s")
+        while time_passed < run_s:
             helpers.manual_control(master, x=0, y=speed, z=500, r=0)
             time_passed = default_timer() - time_start
             #time.sleep(0.05)
