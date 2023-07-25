@@ -66,9 +66,10 @@ def run(conn_type: str = "CC2A"):
     helpers.arm(master)
 
     # turn using manual control
-    target_depth_m = 1 # dummy target depth
+    target_depth_m = 1 # dummy target depth needed to update and display the position
+    relative_target_heading_deg = 15
     timeout_s = 10
-    helpers.turn(master, 360, target_depth_m, timeout_s, verbose=3)
+    helpers.turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose=3)
 
     # clean up (disarm)
     print("Inital state")
