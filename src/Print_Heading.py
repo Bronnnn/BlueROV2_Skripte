@@ -65,9 +65,10 @@ def run(conn_type: str = "CC2A"):
     # arm ardusub
     helpers.arm(master)
 
-    target_depth_m = 1 # dummy target depth
-    position = helpers.update_position(master, target_depth_m, verbose=3)
-    helpers.print_position(position, target_depth_m)
+    while True:
+        target_depth_m = 1 # dummy target depth
+        position = helpers.update_position(master, target_depth_m, verbose=3)
+        helpers.print_position(position, target_depth_m)
 
     # clean up (disarm)
     print("Inital state")
