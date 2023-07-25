@@ -9,10 +9,12 @@ from src import Teststand_Tauchsequenz_2
 from src import Teststand_setTargetDepth_Experiment
 from src import Teststand_Motorsequenz_Rampe
 from src import ROV_Speedtest
+from src import Teststand_Tauchsequenz_3
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     available_sequences = ["Teststand_Motorsequenz", "Teststand_Tauchsequenz_1", "Teststand_Tauchsequenz_2",
+                           "Teststand_Tauchsequenz_3",
                            "Teststand_setTargetDepth_Experiment", "Teststand_Motorsequenz_Rampe", "ROV_Speedtest"]
     available_connection_types = {"SC2A": "Surface Computer to Autopilot", "CC2A": "Companion Computer to Autopilot"}
     if len(sys.argv)<3:
@@ -30,6 +32,8 @@ if __name__ == '__main__':
         Teststand_Tauchsequenz_1.run(conn_type=conn_type)
     elif sequence_name == "Teststand_Tauchsequenz_2":
         Teststand_Tauchsequenz_2.run(conn_type="SC2A")
+    elif sequence_name == "Teststand_Tauchsequenz_3":
+        Teststand_Tauchsequenz_3.run(conn_type=conn_type)
     elif sequence_name == "Teststand_setTargetDepth_Experiment":
         Teststand_setTargetDepth_Experiment.run(conn_type=conn_type)
     elif sequence_name == "Teststand_Motorsequenz_Rampe":
