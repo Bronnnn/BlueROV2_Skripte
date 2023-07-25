@@ -65,7 +65,7 @@ def run(conn_type:str="CC2A"):
     # arm ardusub
     helpers.arm(master)
 
-    for speed in np.arange(start=500, stop=374, step=-25):
+    for speed in np.arange(start=425, stop=349, step=-25):
         # init timer
         time_start = default_timer()
         time_passed = 0
@@ -84,7 +84,7 @@ def run(conn_type:str="CC2A"):
             helpers.manual_control(master, x=0, y=0, z=500, r=0)
             time_passed = default_timer() - time_start
 
-    for speed in np.arange(start=0, stop=101, step=25):
+    for speed in np.arange(start=100, stop=151, step=25):
         # init timer
         time_start = default_timer()
         time_passed = 0
@@ -103,7 +103,7 @@ def run(conn_type:str="CC2A"):
             helpers.manual_control(master, x=0, y=0, z=500, r=0)
             time_passed = default_timer() - time_start
 
-    for speed in np.arange(start=0, stop=101, step=25):
+    for speed in np.arange(start=100, stop=151, step=25):
         # init timer
         time_start = default_timer()
         time_passed = 0
@@ -122,7 +122,7 @@ def run(conn_type:str="CC2A"):
             helpers.manual_control(master, x=0, y=0, z=500, r=0)
             time_passed = default_timer() - time_start
 
-    for speed in np.arange(start=0, stop=101, step=25):
+    for speed in np.arange(start=100, stop=151, step=25):
         # init timer
         time_start = default_timer()
         time_passed = 0
