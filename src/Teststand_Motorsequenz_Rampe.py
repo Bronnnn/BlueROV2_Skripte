@@ -65,7 +65,7 @@ def run(conn_type:str="CC2A"):
     # arm ardusub
     helpers.arm(master)
 
-    for speed in np.arange(start=500, stop=425, step=-25):
+    for speed in np.arange(start=500, stop=374, step=-25):
         # init timer
         time_start = default_timer()
         time_passed = 0
@@ -74,20 +74,17 @@ def run(conn_type:str="CC2A"):
         while time_passed < run_s:
             helpers.manual_control(master, x=0, y=0, z=speed, r=0)
             time_passed = default_timer() - time_start
-            #time.sleep(0.05)
-        sleep_time_s = 4
 
         # init timer
         time_start = default_timer()
         time_passed = 0
-        sleep_s = 2
-        print(f"sleeping {sleep_time_s}s")
+        sleep_s = 4
+        print(f"sleeping {sleep_s}s")
         while time_passed < sleep_s:
             helpers.manual_control(master, x=0, y=0, z=500, r=0)
             time_passed = default_timer() - time_start
-        #time.sleep(sleep_time_s)
 
-    for speed in np.arange(start=0, stop=75, step=25):
+    for speed in np.arange(start=0, stop=101, step=25):
         # init timer
         time_start = default_timer()
         time_passed = 0
@@ -96,12 +93,17 @@ def run(conn_type:str="CC2A"):
         while time_passed < run_s:
             helpers.manual_control(master, x=0, y=0, z=500, r=speed)
             time_passed = default_timer() - time_start
-            #time.sleep(0.05)
-        sleep_time_s = 4
-        print(f"sleeping {sleep_time_s}s")
-        time.sleep(sleep_time_s)
 
-    for speed in np.arange(start=0, stop=75, step=25):
+        # init timer
+        time_start = default_timer()
+        time_passed = 0
+        sleep_s = 4
+        print(f"sleeping {sleep_s}s")
+        while time_passed < sleep_s:
+            helpers.manual_control(master, x=0, y=0, z=500, r=0)
+            time_passed = default_timer() - time_start
+
+    for speed in np.arange(start=0, stop=101, step=25):
         # init timer
         time_start = default_timer()
         time_passed = 0
@@ -110,12 +112,17 @@ def run(conn_type:str="CC2A"):
         while time_passed < run_s:
             helpers.manual_control(master, x=speed, y=0, z=500, r=0)
             time_passed = default_timer() - time_start
-            #time.sleep(0.05)
-        sleep_time_s = 4
-        print(f"sleeping {sleep_time_s}s")
-        time.sleep(sleep_time_s)
 
-    for speed in np.arange(start=0, stop=75, step=25):
+        # init timer
+        time_start = default_timer()
+        time_passed = 0
+        sleep_s = 4
+        print(f"sleeping {sleep_s}s")
+        while time_passed < sleep_s:
+            helpers.manual_control(master, x=0, y=0, z=500, r=0)
+            time_passed = default_timer() - time_start
+
+    for speed in np.arange(start=0, stop=101, step=25):
         # init timer
         time_start = default_timer()
         time_passed = 0
@@ -124,10 +131,15 @@ def run(conn_type:str="CC2A"):
         while time_passed < run_s:
             helpers.manual_control(master, x=0, y=speed, z=500, r=0)
             time_passed = default_timer() - time_start
-            #time.sleep(0.05)
-        sleep_time_s = 4
-        print(f"sleeping {sleep_time_s}s")
-        time.sleep(sleep_time_s)
+
+        # init timer
+        time_start = default_timer()
+        time_passed = 0
+        sleep_s = 4
+        print(f"sleeping {sleep_s}s")
+        while time_passed < sleep_s:
+            helpers.manual_control(master, x=0, y=0, z=500, r=0)
+            time_passed = default_timer() - time_start
 
     # clean up (disarm)
     print("Inital state")
