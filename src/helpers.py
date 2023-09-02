@@ -453,8 +453,9 @@ def turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose
         elif angle_wrap_left_turn: relative_heading_deg -= 360 - abs(heading_new_deg - heading_old_deg)
         else: relative_heading_deg += heading_new_deg - heading_old_deg
 
-        relative_heading_difference_abs_deg = abs(relative_target_heading_deg-relative_heading_deg)
-        relative_heading_difference_deg = relative_target_heading_deg-relative_heading_deg
+        relative_heading_difference_deg = relative_target_heading_deg - relative_heading_deg
+        relative_heading_difference_abs_deg = abs(relative_heading_difference_deg)
+
 
         if relative_heading_deg > 360+num_full_turns_made*360:
             num_full_turns_made +=1
@@ -462,6 +463,7 @@ def turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose
         print(f"""
         Target (relative): {relative_target_heading_deg}°
         Reached (relative): {relative_heading_deg:.2f}°
+        Difference (relative): {relative_heading_difference_deg:.2f}
         Absolute Difference (relative): {relative_heading_difference_abs_deg:.2f}
         Target (absolute): {absolute_target_heading:.2f}° and {num_target_full_turns} full turns
         Reached (absolute): {heading_new_deg} and {num_full_turns_made} full turns
