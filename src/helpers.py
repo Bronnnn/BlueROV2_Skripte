@@ -472,7 +472,7 @@ def turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose
 
         # reduce power when close to target, to not overshoot (could have made a more sophisticated approach with pid
         # controller and such but this works aswell since our requirements are not that high)
-        power = 200
+        power = 500
         if relative_heading_difference_abs_deg < 10:
             power_tuning_factor = abs(1-relative_heading_deg/relative_target_heading_deg)
             if power_tuning_factor > 1: power_tuning_factor = 1
