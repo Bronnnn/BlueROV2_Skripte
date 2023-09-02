@@ -463,7 +463,7 @@ def turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose
         Target (relative): {relative_target_heading_deg}°
         Reached (relative): {relative_heading_deg:.2f}°
         Target (absolute): {absolute_target_heading:.2f}° and {num_target_full_turns} full turns
-        Reached (absolute): {heading_new_deg if num_full_turns_made==num_target_full_turns else 0}°
+        Reached (absolute): {heading_new_deg} and {num_full_turns_made} full turns°
         Target (num complete turns): {num_target_full_turns}
         Reached (num complete turns): {num_full_turns_made}""", end="")
 
