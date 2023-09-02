@@ -256,6 +256,10 @@ def check_capabilities(master, verbose=3):
     # check if autopilot supports commanding position and velocity targets in global scaled integers
     # Source: https://mavlink.io/en/messages/common.html#MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_GLOBAL_INT
     MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_GLOBAL_INT = autopilot_version['capabilities'] & 256
+    print(MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_GLOBAL_INT)
+    print(MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_GLOBAL_INT==256)
+    print(autopilot_version['capabilities'])
+    print(autopilot_version['capabilities']==256)
     if verbose>0: print(f"MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_GLOBAL_INT: {MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_GLOBAL_INT == 256}")
     MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_LOCAL_NED = autopilot_version['capabilities'] & 128
     if verbose>0: print(f"MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_LOCAL_NED: {MAV_PROTOCOL_CAPABILITY_SET_POSITION_TARGET_LOCAL_NED == 128}")

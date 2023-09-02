@@ -23,7 +23,7 @@ if __name__ == '__main__':
                            "Print_Heading",
                            "Teststand_setTargetDepth_Experiment", "Teststand_Motorsequenz_Rampe", "ROV_Speedtest"]
     available_connection_types = {"SC2A": "Surface Computer to Autopilot", "CC2A": "Companion Computer to Autopilot"}
-    if len(sys.argv)<3:
+    if len(sys.argv)!=3:
         print(f"Requires 2 arguments: "
               f"\n1) sequence name (available sequences: {available_sequences})"
               f"\n2) connection type (avaialbe connection types: {available_connection_types})"
