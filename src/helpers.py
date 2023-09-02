@@ -462,8 +462,9 @@ def turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose
         print(f"""
         Target (relative): {relative_target_heading_deg}°
         Reached (relative): {relative_heading_deg:.2f}°
+        Absolute Difference (relative): {relative_heading_difference_abs_deg:.2f}
         Target (absolute): {absolute_target_heading:.2f}° and {num_target_full_turns} full turns
-        Reached (absolute): {heading_new_deg} and {num_full_turns_made} full turns°
+        Reached (absolute): {heading_new_deg} and {num_full_turns_made} full turns
         Target (num complete turns): {num_target_full_turns}
         Reached (num complete turns): {num_full_turns_made}""", end="")
 
@@ -478,17 +479,17 @@ def turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose
 
         # turn
         if relative_heading_difference_deg > 0:
-            print(f"{(power/1000)*100}% power rotating right", end="")
+            print(f"\n{(power/1000)*100}% power rotating right", end="")
             manual_control(master, x=0, y=0, z=500, r=power)
         if relative_heading_difference_deg < 0:
-            print(f"{(power/1000)*100}% power rotating left", end="")
+            print(f"\n{(power/1000)*100}% power rotating left", end="")
             manual_control(master, x=0, y=0, z=500, r=-power)
 
         heading_old_deg = heading_new_deg
 
         # print the time left for reaching the target depth, before starting to rotate
         time_passed = default_timer() - time_start
-        print(f"Make turn: {(timeout_s - time_passed):.2f}s until timeout.")
+        print(f"\nMake turn: {(timeout_s - time_passed):.2f}s until timeout.")
         print("\n")
 
         #time.sleep(0.5)
