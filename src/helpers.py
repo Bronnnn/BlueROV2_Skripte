@@ -481,10 +481,10 @@ def turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose
 
         # turn
         if relative_heading_difference_deg > 0:
-            print(f"\n{(power/1000)*100}% power rotating right", end="")
+            print(f"\n{(power/1000)*100}% (={power}) power rotating right", end="")
             manual_control(master, x=0, y=0, z=500, r=power)
         if relative_heading_difference_deg < 0:
-            print(f"\n{(power/1000)*100}% power rotating left", end="")
+            print(f"\n{(power/1000)*100}% (={power}) power rotating left", end="")
             manual_control(master, x=0, y=0, z=500, r=-power)
 
         heading_old_deg = heading_new_deg
