@@ -417,7 +417,10 @@ def turn(master, relative_target_heading_deg, target_depth_m, timeout_s, verbose
     heading_old_deg = position['heading']
     num_target_full_turns = relative_target_heading_deg // 360
     fraction_turn_deg = relative_target_heading_deg - num_target_full_turns * 360
-    absolute_target_heading = position['heading'] + fraction_turn_deg
+    if position['heading'] + fraction_turn_deg > 360:
+        absolute_target_heading = position['heading'] + fraction_turn_deg - 360
+    else:
+        absolute_target_heading = position['heading'] + fraction_turn_deg
 
     print(f"""
     Set target turn (relative to the current heading): {relative_target_heading_deg}°
